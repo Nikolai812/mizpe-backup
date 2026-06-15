@@ -1,6 +1,44 @@
 from pathlib import Path
 from astropy.io import fits
 
+from configparser import ConfigParser
+import argparse
+
+def read_config(config_file: str = "rename_config.ini") -> dict:
+    parser = ConfigParser()
+    parser.read(config_file)
+
+    return {
+        "data_root": parser.get("rename", "data_root", fallback="."),
+        "folder": parser.get("rename", "folder", fallback="."),
+        "mask": parser.get("rename", "mask", fallback="")
+    }
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Rename polar flat FITS files."
+    )
+
+    parser.add_argument(
+        "-d", "--data-root",
+        help="Root data directory"
+    )
+
+    parser.add_argument(
+        "-f", "--folder",
+        help="Folder relative to data-root"
+    )
+
+    parser.add_argument(
+        "-m", "--mask",
+        help="Subdirectory mask"
+    )
+
+    return parser.parse_args()
+
+
+
 
 def rename_polar_flats(directory: str = ".") -> None:
     """
@@ -65,11 +103,35 @@ def rename_polar_flats_in_subdirs(root: str = ".", mask: str = "") -> None:
 
 
 def main():
+    args = parse_args()
+
+    config = read_config()
+
+    data_root = args.data_root or config["data_root"]
+    folder = args.folder or config["folder"]
+
+    # command line mask overrides config mask
+    mask = args.mask if (
+            args.mask is not None
+            or args.folder is not None
+    ) else config["mask"]
+
+    target = Path(data_root) / folder
+
+    print(f"Target path: {target}")
+
+    if mask:
+        rename_polar_flats_in_subdirs(
+            root=str(target),
+            mask=mask
+        )
+    else:
+        rename_polar_flats(str(target))
     #rename_polar_flats("./20260613h80")
-    rename_polar_flats_in_subdirs(
-        root=".",
-        mask="202606*"
-    )
+    # rename_polar_flats_in_subdirs(
+    #     root=".",
+    #     mask="202606*"
+    # )
 
 
 if __name__ == "__main__":
