@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# This script is not used by cron. cron is usinf bmizpe_dwn.sh
 echo "================================"
 echo "Start at $(date +%Y%m%d_%H%M%S)"
 echo "================================"
