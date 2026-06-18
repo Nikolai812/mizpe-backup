@@ -47,6 +47,9 @@ def rename_polar_flats(directory: str = ".") -> None:
 
     The operation is idempotent: files already starting with 'polar_'
     are skipped.
+
+    Returns:
+        None: 
     """
     have_polar = 0
     to_rename=0

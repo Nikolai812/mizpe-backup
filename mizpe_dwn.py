@@ -1,7 +1,10 @@
+import datetime
 import re
 import os
 import paramiko
 import subprocess
+
+from polar_renamer import rename_polar_flats
 
 
 def download_subdirectories_with_rsync(subdirs, remote_base_path, local_base_path, ssh_user, ssh_host):
@@ -104,12 +107,19 @@ def syncronize_directories(local_path, remote_path, ssh_host, ssh_user, ssh_key=
 
         # Find subdirectories on remote that are not on local
         missing_locally = sorted(set(remote_subdirs) - set(local_subdirs))
-        print("\nPattern(^2025) matching subdirectories present remotely but missing locally:")
+        print("\nPattern(^202[5-8]) matching subdirectories present remotely but missing locally:")
         for subdir in missing_locally:
             print(f" - {subdir}")
 
         download_subdirectories_with_rsync(missing_locally, remote_path, local_path, ssh_user, ssh_host)
 
+        print("Going to apply polar renaming for the appropriate downloaded files (with NAXIS2==2080 )")
+        for subdir in missing_locally:
+            subdir_path = str(os.path.join(local_path, subdir))
+            print(f"!!! Polar renaming for: {subdir_path}")
+            rename_polar_flats(subdir_path)
+
+        print("Polar renaming for missing locally subdirectories completed")
     finally:
         ssh.close()
         print(f"Disconnected from {ssh_host}")
@@ -124,4 +134,10 @@ if __name__ == "__main__":
     ssh_key = None  # or path to private key
     ssh_password = "your_password_here"  # use only if not using key
 
+    start_time = datetime.datetime.now()
+    print(f"Starting synchronization with mizpe: {ssh_host} at {start_time}")
+
     syncronize_directories(local_path, remote_path, ssh_host, ssh_user, ssh_key, ssh_password)
+
+    end_time = datetime.datetime.now()
+    print(f"Synchronization with mizpe ended at {end_time}")
